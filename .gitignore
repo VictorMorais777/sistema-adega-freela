@@ -1,0 +1,20 @@
+# Maven
+target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Compilados
+*.class
+
+# Dados gerados pelo sistema em tempo de execução (não devem ir pro repositório)
+vendas.txt
+estoque_itens.txt
+estoque_garrafas.txt
+adega.db
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
