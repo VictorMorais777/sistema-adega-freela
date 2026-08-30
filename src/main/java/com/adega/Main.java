@@ -4,7 +4,7 @@ import com.adega.model.Bebida;
 import com.adega.model.Cerveja;
 import com.adega.model.Pinga;
 import com.adega.model.Vinho;
-import com.adega.model.copao.Copao;
+import com.adega.model.copao.CopaoComponente;
 import com.adega.model.item.Energetico;
 import com.adega.model.item.Gelo;
 import com.adega.model.item.Gin;
@@ -89,8 +89,6 @@ public class Main {
         System.out.println("-----------------------------------------");
     }
 
-    // ===================== ITENS DE COPÃO =====================
-
     private static void cadastrarItemCopao() {
         System.out.println("\nQual item deseja cadastrar?");
         System.out.println("1 - Gin");
@@ -171,17 +169,16 @@ public class Main {
         String nomeGin = lerTexto("Nome do gin: ");
         String nomeEnergetico = lerTexto("Nome do energético: ");
         String saborGelo = lerTexto("Sabor do gelo: ");
+        int quantidadeGelo = lerInt("Quantidade de gelo (ex: 1 ou 2): ");
 
         try {
-            Copao copao = estoque.criarCopao(nomeCopao, nomeGin, nomeEnergetico, saborGelo);
+            CopaoComponente copao = estoque.criarCopao(nomeCopao, nomeGin, nomeEnergetico, saborGelo, quantidadeGelo);
             System.out.printf("Copão \"%s\" montado! Valor: R$ %.2f%n", copao.getNome(), copao.getPreco());
             processarPagamento(copao);
         } catch (RuntimeException e) {
             System.out.println("Não foi possível montar o copão: " + e.getMessage());
         }
     }
-
-    // ===================== GARRAFAS =====================
 
     private static void cadastrarGarrafa() {
         System.out.println("\nQual garrafa deseja cadastrar?");
@@ -283,8 +280,6 @@ public class Main {
         }
     }
 
-    // ===================== PAGAMENTO =====================
-
     private static void processarPagamento(Bebida vendida) {
         System.out.println("\nForma de pagamento:");
         System.out.println("1 - Dinheiro");
@@ -331,8 +326,6 @@ public class Main {
             return valorPago;
         }
     }
-
-    // ===================== RELATÓRIOS =====================
 
     private static void relatorioFaturamentoPorDia() {
         Map<LocalDate, Double> mapa = vendaService.faturamentoPorDia();
@@ -418,8 +411,6 @@ public class Main {
         return quantidade <= ESTOQUE_MINIMO ? "  ⚠ ESTOQUE BAIXO" : "";
     }
 
-    // ===================== PERSISTÊNCIA =====================
-
     private static void salvarVendas() {
         if (vendaService.listarVendas().isEmpty()) {
             System.out.println("Nenhuma venda registrada ainda.");
@@ -446,8 +437,6 @@ public class Main {
         }
         return false;
     }
-
-    // ===================== HELPERS DE LEITURA =====================
 
     private static String lerTexto(String mensagem) {
         System.out.print(mensagem);

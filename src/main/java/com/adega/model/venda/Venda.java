@@ -1,7 +1,7 @@
 package com.adega.model.venda;
 
 import com.adega.model.Bebida;
-import com.adega.model.copao.Copao;
+import com.adega.model.copao.CopaoComponente;
 
 import java.time.LocalDateTime;
 
@@ -52,7 +52,7 @@ public class Venda {
     }
 
     public String formatar() {
-        String tipo = (bebida instanceof Copao) ? "Copão" : bebida.getClass().getSimpleName();
+        String tipo = (bebida instanceof CopaoComponente) ? "Copão" : bebida.getClass().getSimpleName();
 
         StringBuilder sb = new StringBuilder();
         sb.append("----------------------------------\n");

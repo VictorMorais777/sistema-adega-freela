@@ -1,6 +1,7 @@
 package com.adega.service;
 
-import com.adega.model.copao.Copao;
+import com.adega.model.copao.CopaoBuilder;
+import com.adega.model.copao.CopaoComponente;
 import com.adega.model.item.Gin;
 import com.adega.model.item.Energetico;
 import com.adega.model.item.Gelo;
@@ -93,7 +94,7 @@ public class EstoqueService {
         gelos.removeIf(g -> g.getSabor().equalsIgnoreCase(sabor));
     }
 
-    public Copao criarCopao(String nome, String nomeGin, String nomeEnergetico, String saborGelo) {
+    public CopaoComponente criarCopao(String nome, String nomeGin, String nomeEnergetico, String saborGelo, int quantidadeGelo) {
 
         Gin gin = buscarGinPorNome(nomeGin);
         Energetico energetico = buscarEnergeticoPorNome(nomeEnergetico);
@@ -119,15 +120,22 @@ public class EstoqueService {
             throw new RuntimeException("Sem estoque de energético");
         }
 
-        if (gelo.getQuantidadeEstoque() <= 0) {
-            throw new RuntimeException("Sem estoque de gelo");
+        if (gelo.getQuantidadeEstoque() < quantidadeGelo) {
+            throw new RuntimeException("Estoque insuficiente de gelo");
         }
 
-        // Cada copão consome 1 unidade de cada ingrediente
+        CopaoComponente copao = new CopaoBuilder()
+                .setNome(nome)
+                .setGin(gin)
+                .setEnergetico(energetico)
+                .setGelo(gelo)
+                .setQuantidadeGelo(quantidadeGelo)
+                .build();
+
         gin.removerEstoque(1);
         energetico.removerEstoque(1);
-        gelo.removerEstoque(1);
+        gelo.removerEstoque(quantidadeGelo);
 
-        return new Copao(nome, gin, energetico, gelo);
+        return copao;
     }
 }

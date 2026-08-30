@@ -10,6 +10,7 @@ public class CopaoBuilder {
     private Gin gin;
     private Energetico energetico;
     private Gelo gelo;
+    private int quantidadeGelo = 1;
 
     public CopaoBuilder setNome(String nome) {
         this.nome = nome;
@@ -31,7 +32,12 @@ public class CopaoBuilder {
         return this;
     }
 
-    public Copao build() {
+    public CopaoBuilder setQuantidadeGelo(int quantidadeGelo) {
+        this.quantidadeGelo = quantidadeGelo;
+        return this;
+    }
+
+    public CopaoComponente build() {
         if (nome == null || nome.isBlank()) {
             throw new IllegalStateException("Nome do copão é obrigatório");
         }
@@ -44,6 +50,15 @@ public class CopaoBuilder {
         if (gelo == null) {
             throw new IllegalStateException("Gelo é obrigatório para montar o copão");
         }
-        return new Copao(nome, gin, energetico, gelo);
+        if (quantidadeGelo <= 0) {
+            throw new IllegalStateException("Quantidade de gelo deve ser maior que zero");
+        }
+
+        CopaoComponente copao = new CopaoBase(nome);
+        copao = new GinDecorator(copao, gin);
+        copao = new EnergeticoDecorator(copao, energetico);
+        copao = new GeloDecorator(copao, gelo, quantidadeGelo);
+
+        return copao;
     }
 }
