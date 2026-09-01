@@ -5,7 +5,9 @@ import com.adega.repository.EstoqueRepository;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -13,7 +15,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+
+import java.util.Optional;
 
 public class EstoqueView {
 
@@ -28,6 +33,13 @@ public class EstoqueView {
     private final TextField campoPrecoVenda = new TextField();
     private final TextField campoEstoqueMinimo = new TextField();
     private final Label labelMensagem = new Label();
+    private final Label labelModo = new Label("Cadastrando novo item");
+
+    private final Button botaoSalvar = new Button("Cadastrar item");
+    private final Button botaoRemover = new Button("Remover selecionado");
+    private final Button botaoCancelar = new Button("Cancelar edição");
+
+    private ItemEstoque itemSelecionado;
 
     public EstoqueView() {
         configurarTabela();
@@ -64,6 +76,12 @@ public class EstoqueView {
         tabela.getColumns().addAll(colCategoria, colNome, colQuantidade, colPrecoCompra, colPrecoVenda, colEstoqueMinimo);
         tabela.setItems(dados);
         tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                entrarModoEdicao(novo);
+            }
+        });
     }
 
     private void carregarDados() {
@@ -91,14 +109,51 @@ public class EstoqueView {
         grid.add(new Label("Preço venda:"), 2, 2);
         grid.add(campoPrecoVenda, 3, 2);
 
-        Button botaoCadastrar = new Button("Cadastrar item");
-        botaoCadastrar.setOnAction(e -> cadastrarItem());
+        botaoSalvar.setOnAction(e -> salvarItem());
+        botaoRemover.setOnAction(e -> removerItem());
+        botaoCancelar.setOnAction(e -> sairDoModoEdicao());
 
-        VBox container = new VBox(10, grid, botaoCadastrar, labelMensagem);
+        botaoRemover.setDisable(true);
+        botaoCancelar.setDisable(true);
+
+        labelModo.setStyle("-fx-font-weight: bold;");
+
+        HBox botoes = new HBox(10, botaoSalvar, botaoRemover, botaoCancelar);
+
+        VBox container = new VBox(10, labelModo, grid, botoes, labelMensagem);
         return container;
     }
 
-    private void cadastrarItem() {
+    private void entrarModoEdicao(ItemEstoque item) {
+        itemSelecionado = item;
+
+        campoCategoria.setText(item.getCategoria());
+        campoNome.setText(item.getNome());
+        campoQuantidade.setText(String.valueOf(item.getQuantidade()));
+        campoPrecoCompra.setText(String.valueOf(item.getPrecoCompra()));
+        campoPrecoVenda.setText(String.valueOf(item.getPrecoVenda()));
+        campoEstoqueMinimo.setText(String.valueOf(item.getEstoqueMinimo()));
+
+        labelModo.setText("Editando: " + item.getNome());
+        botaoSalvar.setText("Salvar alterações");
+        botaoRemover.setDisable(false);
+        botaoCancelar.setDisable(false);
+        labelMensagem.setText("");
+    }
+
+    private void sairDoModoEdicao() {
+        itemSelecionado = null;
+        tabela.getSelectionModel().clearSelection();
+
+        labelModo.setText("Cadastrando novo item");
+        botaoSalvar.setText("Cadastrar item");
+        botaoRemover.setDisable(true);
+        botaoCancelar.setDisable(true);
+
+        limparCampos();
+    }
+
+    private void salvarItem() {
         try {
             String categoria = campoCategoria.getText().trim();
             String nome = campoNome.getText().trim();
@@ -112,15 +167,49 @@ public class EstoqueView {
                 return;
             }
 
-            ItemEstoque item = new ItemEstoque(categoria, nome, quantidade, precoCompra, precoVenda, estoqueMinimo);
-            repository.salvar(item);
+            if (itemSelecionado == null) {
+                ItemEstoque novo = new ItemEstoque(categoria, nome, quantidade, precoCompra, precoVenda, estoqueMinimo);
+                repository.salvar(novo);
+                mostrarSucesso("Item \"" + nome + "\" cadastrado com sucesso!");
+                limparCampos();
+            } else {
+                itemSelecionado.setCategoria(categoria);
+                itemSelecionado.setNome(nome);
+                itemSelecionado.setQuantidade(quantidade);
+                itemSelecionado.setPrecoCompra(precoCompra);
+                itemSelecionado.setPrecoVenda(precoVenda);
+                itemSelecionado.setEstoqueMinimo(estoqueMinimo);
+                repository.atualizar(itemSelecionado);
+                mostrarSucesso("Item \"" + nome + "\" atualizado com sucesso!");
+                sairDoModoEdicao();
+            }
 
-            mostrarSucesso("Item \"" + nome + "\" cadastrado com sucesso!");
-            limparCampos();
             carregarDados();
 
         } catch (NumberFormatException e) {
             mostrarErro("Quantidade, preços e estoque mínimo precisam ser números válidos.");
+        }
+    }
+
+    private void removerItem() {
+        if (itemSelecionado == null) {
+            return;
+        }
+
+        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION,
+                "Remover \"" + itemSelecionado.getNome() + "\" do estoque? Essa ação não pode ser desfeita.",
+                ButtonType.YES, ButtonType.NO);
+        confirmacao.setTitle("Confirmar remoção");
+        confirmacao.setHeaderText(null);
+
+        Optional<ButtonType> resposta = confirmacao.showAndWait();
+
+        if (resposta.isPresent() && resposta.get() == ButtonType.YES) {
+            String nomeRemovido = itemSelecionado.getNome();
+            repository.remover(itemSelecionado.getId());
+            mostrarSucesso("Item \"" + nomeRemovido + "\" removido.");
+            sairDoModoEdicao();
+            carregarDados();
         }
     }
 

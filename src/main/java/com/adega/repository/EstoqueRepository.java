@@ -77,6 +77,26 @@ public class EstoqueRepository {
         }
     }
 
+    public void atualizar(ItemEstoque item) {
+        String sql = "UPDATE estoque SET categoria = ?, nome = ?, quantidade = ?, preco_compra = ?, preco_venda = ?, estoque_minimo = ? WHERE id = ?";
+
+        try (Connection conn = conectar();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, item.getCategoria());
+            stmt.setString(2, item.getNome());
+            stmt.setInt(3, item.getQuantidade());
+            stmt.setDouble(4, item.getPrecoCompra());
+            stmt.setDouble(5, item.getPrecoVenda());
+            stmt.setInt(6, item.getEstoqueMinimo());
+            stmt.setInt(7, item.getId());
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao atualizar item: " + e.getMessage(), e);
+        }
+    }
+
     public void remover(int id) {
         String sql = "DELETE FROM estoque WHERE id = ?";
 
