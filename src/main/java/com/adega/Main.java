@@ -5,9 +5,9 @@ import com.adega.model.Cerveja;
 import com.adega.model.Pinga;
 import com.adega.model.Vinho;
 import com.adega.model.copao.CopaoComponente;
+import com.adega.model.item.Destilado;
 import com.adega.model.item.Energetico;
 import com.adega.model.item.Gelo;
-import com.adega.model.item.Gin;
 import com.adega.model.venda.FormaPagamento;
 import com.adega.model.venda.Venda;
 import com.adega.service.ArquivoService;
@@ -23,6 +23,7 @@ import java.util.Scanner;
 public class Main {
 
     private static final int ESTOQUE_MINIMO = 3;
+    private static final int ESTOQUE_MINIMO_ML = 100;
 
     private static final Scanner scanner = new Scanner(System.in);
     private static final EstoqueService estoque = new EstoqueService();
@@ -71,7 +72,7 @@ public class Main {
     private static void exibirMenu() {
         System.out.println("-----------------------------------------");
         System.out.println("-- Copões --");
-        System.out.println("1 - Cadastrar item de copão (Gin/Energético/Gelo)");
+        System.out.println("1 - Cadastrar item de copão (Destilado/Energético/Gelo)");
         System.out.println("2 - Listar estoque de itens de copão");
         System.out.println("3 - Montar e vender copão");
         System.out.println("-- Garrafas --");
@@ -89,28 +90,33 @@ public class Main {
         System.out.println("-----------------------------------------");
     }
 
+    // ===================== ITENS DE COPÃO =====================
+
     private static void cadastrarItemCopao() {
         System.out.println("\nQual item deseja cadastrar?");
-        System.out.println("1 - Gin");
+        System.out.println("1 - Destilado (Gin, Whisky, Vodka...)");
         System.out.println("2 - Energético");
         System.out.println("3 - Gelo");
         int tipo = lerInt("Opção: ");
 
         switch (tipo) {
-            case 1 -> cadastrarGinItem();
+            case 1 -> cadastrarDestilado();
             case 2 -> cadastrarEnergetico();
             case 3 -> cadastrarGelo();
             default -> System.out.println("Tipo inválido.");
         }
     }
 
-    private static void cadastrarGinItem() {
-        String nome = lerTexto("Nome do gin: ");
-        double preco = lerDouble("Preço: ");
-        int quantidade = lerInt("Quantidade em estoque: ");
+    private static void cadastrarDestilado() {
+        String nome = lerTexto("Nome (ex: Beefeater, Red Label): ");
+        String tipoDestilado = lerTexto("Tipo (ex: Gin, Whisky, Vodka): ");
+        double precoGarrafa = lerDouble("Preço da garrafa: R$ ");
+        int volumeGarrafaMl = lerInt("Volume da garrafa (em ml, ex: 1000): ");
 
-        estoque.cadastrarGin(new Gin(nome, preco, quantidade));
-        System.out.println("Gin \"" + nome + "\" cadastrado com sucesso!");
+        double precoPorMl = precoGarrafa / volumeGarrafaMl;
+
+        estoque.cadastrarDestilado(new Destilado(nome, tipoDestilado, precoPorMl, volumeGarrafaMl));
+        System.out.printf("%s \"%s\" cadastrado! (R$ %.4f por ml, %d ml em estoque)%n", tipoDestilado, nome, precoPorMl, volumeGarrafaMl);
     }
 
     private static void cadastrarEnergetico() {
@@ -132,13 +138,14 @@ public class Main {
     }
 
     private static void listarEstoqueCopao() {
-        System.out.println("\n===== ESTOQUE DE GINS (copão) =====");
-        List<Gin> gins = estoque.listarGins();
-        if (gins.isEmpty()) {
-            System.out.println("Nenhum gin cadastrado.");
+        System.out.println("\n===== ESTOQUE DE DESTILADOS =====");
+        List<Destilado> destilados = estoque.listarDestilados();
+        if (destilados.isEmpty()) {
+            System.out.println("Nenhum destilado cadastrado.");
         } else {
-            for (Gin g : gins) {
-                System.out.printf("- %s | R$ %.2f | Qtd: %d%s%n", g.getNome(), g.getPreco(), g.getQuantidadeEstoque(), alertaEstoque(g.getQuantidadeEstoque()));
+            for (Destilado d : destilados) {
+                System.out.printf("- [%s] %s | R$ %.4f/ml | %dml em estoque%s%n",
+                        d.getTipo(), d.getNome(), d.getPrecoPorMl(), d.getQuantidadeEstoque(), alertaEstoqueMl(d.getQuantidadeEstoque()));
             }
         }
 
@@ -166,19 +173,22 @@ public class Main {
     private static void montarCopao() {
         System.out.println("\nVamos montar um copão!");
         String nomeCopao = lerTexto("Nome do copão: ");
-        String nomeGin = lerTexto("Nome do gin: ");
+        String nomeDestilado = lerTexto("Nome do destilado (gin/whisky/etc.): ");
+        int mlDestilado = lerInt("Quantidade de ml de destilado usada: ");
         String nomeEnergetico = lerTexto("Nome do energético: ");
         String saborGelo = lerTexto("Sabor do gelo: ");
         int quantidadeGelo = lerInt("Quantidade de gelo (ex: 1 ou 2): ");
 
         try {
-            CopaoComponente copao = estoque.criarCopao(nomeCopao, nomeGin, nomeEnergetico, saborGelo, quantidadeGelo);
+            CopaoComponente copao = estoque.criarCopao(nomeCopao, nomeDestilado, mlDestilado, nomeEnergetico, saborGelo, quantidadeGelo);
             System.out.printf("Copão \"%s\" montado! Valor: R$ %.2f%n", copao.getNome(), copao.getPreco());
             processarPagamento(copao);
         } catch (RuntimeException e) {
             System.out.println("Não foi possível montar o copão: " + e.getMessage());
         }
     }
+
+    // ===================== GARRAFAS =====================
 
     private static void cadastrarGarrafa() {
         System.out.println("\nQual garrafa deseja cadastrar?");
@@ -280,6 +290,8 @@ public class Main {
         }
     }
 
+    // ===================== PAGAMENTO =====================
+
     private static void processarPagamento(Bebida vendida) {
         System.out.println("\nForma de pagamento:");
         System.out.println("1 - Dinheiro");
@@ -327,6 +339,8 @@ public class Main {
         }
     }
 
+    // ===================== RELATÓRIOS =====================
+
     private static void relatorioFaturamentoPorDia() {
         Map<LocalDate, Double> mapa = vendaService.faturamentoPorDia();
 
@@ -356,12 +370,12 @@ public class Main {
     }
 
     private static void verificarEstoqueBaixo() {
-        System.out.println("\n===== ALERTAS DE ESTOQUE BAIXO (≤ " + ESTOQUE_MINIMO + " unidades) =====");
+        System.out.println("\n===== ALERTAS DE ESTOQUE BAIXO =====");
         boolean algumAlerta = false;
 
-        for (Gin g : estoque.listarGins()) {
-            if (g.getQuantidadeEstoque() <= ESTOQUE_MINIMO) {
-                System.out.printf("- Gin (copão): %s | Qtd: %d%n", g.getNome(), g.getQuantidadeEstoque());
+        for (Destilado d : estoque.listarDestilados()) {
+            if (d.getQuantidadeEstoque() <= ESTOQUE_MINIMO_ML) {
+                System.out.printf("- [%s] %s | %dml restantes%n", d.getTipo(), d.getNome(), d.getQuantidadeEstoque());
                 algumAlerta = true;
             }
         }
@@ -411,6 +425,12 @@ public class Main {
         return quantidade <= ESTOQUE_MINIMO ? "  ⚠ ESTOQUE BAIXO" : "";
     }
 
+    private static String alertaEstoqueMl(int quantidadeMl) {
+        return quantidadeMl <= ESTOQUE_MINIMO_ML ? "  ⚠ ESTOQUE BAIXO" : "";
+    }
+
+    // ===================== PERSISTÊNCIA =====================
+
     private static void salvarVendas() {
         if (vendaService.listarVendas().isEmpty()) {
             System.out.println("Nenhuma venda registrada ainda.");
@@ -437,6 +457,8 @@ public class Main {
         }
         return false;
     }
+
+    // ===================== HELPERS DE LEITURA =====================
 
     private static String lerTexto(String mensagem) {
         System.out.print(mensagem);

@@ -4,6 +4,7 @@ import com.adega.model.Cerveja;
 import com.adega.model.Gin;
 import com.adega.model.Pinga;
 import com.adega.model.Vinho;
+import com.adega.model.item.Destilado;
 import com.adega.model.item.Energetico;
 import com.adega.model.item.Gelo;
 import com.adega.model.venda.Venda;
@@ -22,8 +23,6 @@ public class ArquivoService {
     private static final String ARQUIVO_ESTOQUE_ITENS = "estoque_itens.txt";
     private static final String ARQUIVO_ESTOQUE_GARRAFAS = "estoque_garrafas.txt";
 
-    // ===================== VENDAS =====================
-
     public void salvarVendas(List<Venda> vendas) {
         try {
             FileWriter writer = new FileWriter(ARQUIVO_VENDAS);
@@ -40,12 +39,10 @@ public class ArquivoService {
         }
     }
 
-    // ===================== ESTOQUE DE ITENS DE COPÃO =====================
-
     public void salvarEstoqueItens(EstoqueService estoque) {
         try (FileWriter writer = new FileWriter(ARQUIVO_ESTOQUE_ITENS)) {
-            for (com.adega.model.item.Gin gin : estoque.listarGins()) {
-                writer.write(linha("GIN", gin.getNome(), gin.getPreco(), gin.getQuantidadeEstoque()));
+            for (Destilado d : estoque.listarDestilados()) {
+                writer.write("DESTILADO;" + d.getTipo() + ";" + d.getNome() + ";" + d.getPrecoPorMl() + ";" + d.getQuantidadeEstoque() + "\n");
             }
             for (Energetico e : estoque.listarEnergeticos()) {
                 writer.write(linha("ENERGETICO", e.getNome(), e.getPreco(), e.getQuantidadeEstoque()));
@@ -68,15 +65,18 @@ public class ArquivoService {
             while ((linha = reader.readLine()) != null) {
                 if (linha.isBlank()) continue;
                 String[] campos = linha.split(";");
-                String tipo = campos[0];
-                String nome = campos[1];
-                double preco = Double.parseDouble(campos[2]);
-                int quantidade = Integer.parseInt(campos[3]);
+                String tipoLinha = campos[0];
 
-                switch (tipo) {
-                    case "GIN" -> estoque.cadastrarGin(new com.adega.model.item.Gin(nome, preco, quantidade));
-                    case "ENERGETICO" -> estoque.cadastrarEnergetico(new Energetico(nome, preco, quantidade));
-                    case "GELO" -> estoque.cadastrarGelo(new Gelo(nome, preco, quantidade));
+                switch (tipoLinha) {
+                    case "DESTILADO" -> {
+                        String tipoDestilado = campos[1];
+                        String nome = campos[2];
+                        double precoPorMl = Double.parseDouble(campos[3]);
+                        int quantidadeMl = Integer.parseInt(campos[4]);
+                        estoque.cadastrarDestilado(new Destilado(nome, tipoDestilado, precoPorMl, quantidadeMl));
+                    }
+                    case "ENERGETICO" -> estoque.cadastrarEnergetico(new Energetico(campos[1], Double.parseDouble(campos[2]), Integer.parseInt(campos[3])));
+                    case "GELO" -> estoque.cadastrarGelo(new Gelo(campos[1], Double.parseDouble(campos[2]), Integer.parseInt(campos[3])));
                 }
             }
             System.out.println("Estoque de itens de copão carregado com sucesso!");
@@ -84,8 +84,6 @@ public class ArquivoService {
             System.out.println("Erro ao carregar estoque de itens de copão.");
         }
     }
-
-    // ===================== ESTOQUE DE GARRAFAS =====================
 
     public void salvarEstoqueGarrafas(GarrafaService garrafas) {
         try (FileWriter writer = new FileWriter(ARQUIVO_ESTOQUE_GARRAFAS)) {
@@ -133,8 +131,6 @@ public class ArquivoService {
             System.out.println("Erro ao carregar estoque de garrafas.");
         }
     }
-
-    // ===================== HELPER =====================
 
     private String linha(String tipo, String nome, double preco, int quantidade) {
         return tipo + ";" + nome + ";" + preco + ";" + quantidade + "\n";

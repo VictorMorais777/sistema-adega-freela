@@ -2,7 +2,7 @@ package com.adega.service;
 
 import com.adega.model.copao.CopaoBuilder;
 import com.adega.model.copao.CopaoComponente;
-import com.adega.model.item.Gin;
+import com.adega.model.item.Destilado;
 import com.adega.model.item.Energetico;
 import com.adega.model.item.Gelo;
 
@@ -11,12 +11,12 @@ import java.util.List;
 
 public class EstoqueService {
 
-    private List<Gin> gins = new ArrayList<>();
+    private List<Destilado> destilados = new ArrayList<>();
     private List<Energetico> energeticos = new ArrayList<>();
     private List<Gelo> gelos = new ArrayList<>();
 
-    public void cadastrarGin(Gin gin) {
-        gins.add(gin);
+    public void cadastrarDestilado(Destilado destilado) {
+        destilados.add(destilado);
     }
 
     public void cadastrarEnergetico(Energetico energetico) {
@@ -27,10 +27,10 @@ public class EstoqueService {
         gelos.add(gelo);
     }
 
-    public Gin buscarGinPorNome(String nome) {
-        for (Gin gin : gins) {
-            if (gin.getNome().equalsIgnoreCase(nome)) {
-                return gin;
+    public Destilado buscarDestiladoPorNome(String nome) {
+        for (Destilado destilado : destilados) {
+            if (destilado.getNome().equalsIgnoreCase(nome)) {
+                return destilado;
             }
         }
         return null;
@@ -54,8 +54,8 @@ public class EstoqueService {
         return null;
     }
 
-    public List<Gin> listarGins() {
-        return gins;
+    public List<Destilado> listarDestilados() {
+        return destilados;
     }
 
     public List<Energetico> listarEnergeticos() {
@@ -66,24 +66,16 @@ public class EstoqueService {
         return gelos;
     }
 
-    public void adicionarEstoqueGin(String nome, int quantidade) {
-        Gin gin = buscarGinPorNome(nome);
-        if (gin == null) {
-            throw new RuntimeException("Gin não encontrado");
+    public void adicionarEstoqueDestilado(String nome, int quantidadeMl) {
+        Destilado destilado = buscarDestiladoPorNome(nome);
+        if (destilado == null) {
+            throw new RuntimeException("Destilado não encontrado");
         }
-        gin.adicionarEstoque(quantidade);
+        destilado.adicionarEstoque(quantidadeMl);
     }
 
-    public void removerEstoqueGin(String nome, int quantidade) {
-        Gin gin = buscarGinPorNome(nome);
-        if (gin == null) {
-            throw new RuntimeException("Gin não encontrado");
-        }
-        gin.removerEstoque(quantidade);
-    }
-
-    public void removerGin(String nome) {
-        gins.removeIf(gin -> gin.getNome().equalsIgnoreCase(nome));
+    public void removerDestilado(String nome) {
+        destilados.removeIf(d -> d.getNome().equalsIgnoreCase(nome));
     }
 
     public void removerEnergetico(String nome) {
@@ -94,14 +86,14 @@ public class EstoqueService {
         gelos.removeIf(g -> g.getSabor().equalsIgnoreCase(sabor));
     }
 
-    public CopaoComponente criarCopao(String nome, String nomeGin, String nomeEnergetico, String saborGelo, int quantidadeGelo) {
+    public CopaoComponente criarCopao(String nome, String nomeDestilado, int mlDestilado, String nomeEnergetico, String saborGelo, int quantidadeGelo) {
 
-        Gin gin = buscarGinPorNome(nomeGin);
+        Destilado destilado = buscarDestiladoPorNome(nomeDestilado);
         Energetico energetico = buscarEnergeticoPorNome(nomeEnergetico);
         Gelo gelo = buscarGeloPorSabor(saborGelo);
 
-        if (gin == null) {
-            throw new RuntimeException("Gin não encontrado: " + nomeGin);
+        if (destilado == null) {
+            throw new RuntimeException("Destilado não encontrado: " + nomeDestilado);
         }
 
         if (energetico == null) {
@@ -112,8 +104,12 @@ public class EstoqueService {
             throw new RuntimeException("Gelo não encontrado: " + saborGelo);
         }
 
-        if (gin.getQuantidadeEstoque() <= 0) {
-            throw new RuntimeException("Sem estoque de gin");
+        if (mlDestilado <= 0) {
+            throw new RuntimeException("Quantidade de ml do destilado deve ser maior que zero");
+        }
+
+        if (destilado.getQuantidadeEstoque() < mlDestilado) {
+            throw new RuntimeException("Estoque insuficiente de " + destilado.getNome() + " (disponível: " + destilado.getQuantidadeEstoque() + "ml)");
         }
 
         if (energetico.getQuantidadeEstoque() <= 0) {
@@ -126,13 +122,13 @@ public class EstoqueService {
 
         CopaoComponente copao = new CopaoBuilder()
                 .setNome(nome)
-                .setGin(gin)
+                .setDestilado(destilado, mlDestilado)
                 .setEnergetico(energetico)
                 .setGelo(gelo)
                 .setQuantidadeGelo(quantidadeGelo)
                 .build();
 
-        gin.removerEstoque(1);
+        destilado.removerEstoque(mlDestilado);
         energetico.removerEstoque(1);
         gelo.removerEstoque(quantidadeGelo);
 
