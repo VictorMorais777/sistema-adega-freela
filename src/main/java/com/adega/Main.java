@@ -90,8 +90,6 @@ public class Main {
         System.out.println("-----------------------------------------");
     }
 
-    // ===================== ITENS DE COPÃO =====================
-
     private static void cadastrarItemCopao() {
         System.out.println("\nQual item deseja cadastrar?");
         System.out.println("1 - Destilado (Gin, Whisky, Vodka...)");
@@ -187,8 +185,6 @@ public class Main {
             System.out.println("Não foi possível montar o copão: " + e.getMessage());
         }
     }
-
-    // ===================== GARRAFAS =====================
 
     private static void cadastrarGarrafa() {
         System.out.println("\nQual garrafa deseja cadastrar?");
@@ -290,8 +286,6 @@ public class Main {
         }
     }
 
-    // ===================== PAGAMENTO =====================
-
     private static void processarPagamento(Bebida vendida) {
         System.out.println("\nForma de pagamento:");
         System.out.println("1 - Dinheiro");
@@ -338,8 +332,6 @@ public class Main {
             return valorPago;
         }
     }
-
-    // ===================== RELATÓRIOS =====================
 
     private static void relatorioFaturamentoPorDia() {
         Map<LocalDate, Double> mapa = vendaService.faturamentoPorDia();
@@ -429,8 +421,6 @@ public class Main {
         return quantidadeMl <= ESTOQUE_MINIMO_ML ? "  ⚠ ESTOQUE BAIXO" : "";
     }
 
-    // ===================== PERSISTÊNCIA =====================
-
     private static void salvarVendas() {
         if (vendaService.listarVendas().isEmpty()) {
             System.out.println("Nenhuma venda registrada ainda.");
@@ -457,8 +447,6 @@ public class Main {
         }
         return false;
     }
-
-    // ===================== HELPERS DE LEITURA =====================
 
     private static String lerTexto(String mensagem) {
         System.out.print(mensagem);

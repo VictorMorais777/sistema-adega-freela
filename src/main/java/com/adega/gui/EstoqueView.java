@@ -199,7 +199,6 @@ public class EstoqueView {
             int estoqueMinimo = Integer.parseInt(campoEstoqueMinimo.getText().trim());
 
             if (checkDestilado.isSelected() && itemSelecionado == null) {
-                // Modo destilado: informa preço/volume da garrafa, o sistema calcula o preço por ml
                 double precoCompraGarrafa = Double.parseDouble(campoPrecoCompra.getText().trim().replace(",", "."));
                 double precoVendaGarrafa = Double.parseDouble(campoPrecoVenda.getText().trim().replace(",", "."));
                 int volumeGarrafaMl = Integer.parseInt(campoQuantidade.getText().trim());
