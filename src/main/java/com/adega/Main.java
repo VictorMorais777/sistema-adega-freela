@@ -480,16 +480,22 @@ public class Main {
     private static double lerDouble(String mensagem) {
         while (true) {
             System.out.print(mensagem);
-            String entrada = scanner.nextLine().trim().replace(",", ".");
+            String entrada = scanner.nextLine().trim();
+
+            if (entrada.contains(".")) {
+                System.out.println("Use vírgula para separar os centavos (ex: 10,50), não ponto.");
+                continue;
+            }
+
             try {
-                double valor = Double.parseDouble(entrada);
+                double valor = Double.parseDouble(entrada.replace(",", "."));
                 if (valor < 0) {
                     System.out.println("O valor não pode ser negativo.");
                     continue;
                 }
                 return valor;
             } catch (NumberFormatException e) {
-                System.out.println("Valor inválido. Digite um número (ex: 10.50).");
+                System.out.println("Valor inválido. Digite um número usando vírgula (ex: 10,50).");
             }
         }
     }

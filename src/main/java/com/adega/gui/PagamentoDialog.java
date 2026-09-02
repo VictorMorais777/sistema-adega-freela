@@ -44,6 +44,7 @@ public class PagamentoDialog {
 
         Label labelValorPago = new Label("Valor recebido em dinheiro:");
         TextField campoValorPago = new TextField();
+        FormatadorCampo.aplicarFormatoPreco(campoValorPago);
         labelValorPago.setVisible(false);
         labelValorPago.setManaged(false);
         campoValorPago.setVisible(false);

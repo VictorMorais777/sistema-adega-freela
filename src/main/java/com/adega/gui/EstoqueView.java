@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -35,6 +36,11 @@ public class EstoqueView {
     private final Label labelMensagem = new Label();
     private final Label labelModo = new Label("Cadastrando novo item");
 
+    private final CheckBox checkDestilado = new CheckBox("É um destilado (Gin, Whisky, Vodka...) controlado em ml?");
+    private final Label labelQuantidade = new Label("Quantidade:");
+    private final Label labelPrecoCompra = new Label("Preço compra:");
+    private final Label labelPrecoVenda = new Label("Preço venda:");
+
     private final Button botaoSalvar = new Button("Cadastrar item");
     private final Button botaoRemover = new Button("Remover selecionado");
     private final Button botaoCancelar = new Button("Cancelar edição");
@@ -42,6 +48,10 @@ public class EstoqueView {
     private ItemEstoque itemSelecionado;
 
     public EstoqueView() {
+        FormatadorCampo.aplicarFormatoInteiro(campoQuantidade);
+        FormatadorCampo.aplicarFormatoInteiro(campoEstoqueMinimo);
+        FormatadorCampo.aplicarFormatoPreco(campoPrecoCompra);
+        FormatadorCampo.aplicarFormatoPreco(campoPrecoVenda);
         configurarTabela();
         carregarDados();
     }
@@ -99,15 +109,17 @@ public class EstoqueView {
         grid.add(new Label("Nome:"), 2, 0);
         grid.add(campoNome, 3, 0);
 
-        grid.add(new Label("Quantidade:"), 0, 1);
+        grid.add(labelQuantidade, 0, 1);
         grid.add(campoQuantidade, 1, 1);
         grid.add(new Label("Estoque mínimo:"), 2, 1);
         grid.add(campoEstoqueMinimo, 3, 1);
 
-        grid.add(new Label("Preço compra:"), 0, 2);
+        grid.add(labelPrecoCompra, 0, 2);
         grid.add(campoPrecoCompra, 1, 2);
-        grid.add(new Label("Preço venda:"), 2, 2);
+        grid.add(labelPrecoVenda, 2, 2);
         grid.add(campoPrecoVenda, 3, 2);
+
+        checkDestilado.setOnAction(e -> atualizarRotulosDestilado());
 
         botaoSalvar.setOnAction(e -> salvarItem());
         botaoRemover.setOnAction(e -> removerItem());
@@ -120,12 +132,27 @@ public class EstoqueView {
 
         HBox botoes = new HBox(10, botaoSalvar, botaoRemover, botaoCancelar);
 
-        VBox container = new VBox(10, labelModo, grid, botoes, labelMensagem);
+        VBox container = new VBox(10, labelModo, checkDestilado, grid, botoes, labelMensagem);
         return container;
+    }
+
+    private void atualizarRotulosDestilado() {
+        if (checkDestilado.isSelected()) {
+            labelQuantidade.setText("Volume da garrafa (ml):");
+            labelPrecoCompra.setText("Preço compra (garrafa):");
+            labelPrecoVenda.setText("Preço venda (garrafa):");
+        } else {
+            labelQuantidade.setText("Quantidade:");
+            labelPrecoCompra.setText("Preço compra:");
+            labelPrecoVenda.setText("Preço venda:");
+        }
     }
 
     private void entrarModoEdicao(ItemEstoque item) {
         itemSelecionado = item;
+
+        checkDestilado.setSelected(false);
+        atualizarRotulosDestilado();
 
         campoCategoria.setText(item.getCategoria());
         campoNome.setText(item.getNome());
@@ -150,6 +177,9 @@ public class EstoqueView {
         botaoRemover.setDisable(true);
         botaoCancelar.setDisable(true);
 
+        checkDestilado.setSelected(false);
+        atualizarRotulosDestilado();
+
         limparCampos();
     }
 
@@ -157,20 +187,42 @@ public class EstoqueView {
         try {
             String categoria = campoCategoria.getText().trim();
             String nome = campoNome.getText().trim();
-            int quantidade = Integer.parseInt(campoQuantidade.getText().trim());
-            double precoCompra = Double.parseDouble(campoPrecoCompra.getText().trim().replace(",", "."));
-            double precoVenda = Double.parseDouble(campoPrecoVenda.getText().trim().replace(",", "."));
-            int estoqueMinimo = Integer.parseInt(campoEstoqueMinimo.getText().trim());
 
             if (categoria.isBlank() || nome.isBlank()) {
                 mostrarErro("Categoria e nome são obrigatórios.");
                 return;
             }
 
+            int quantidade;
+            double precoCompra;
+            double precoVenda;
+            int estoqueMinimo = Integer.parseInt(campoEstoqueMinimo.getText().trim());
+
+            if (checkDestilado.isSelected() && itemSelecionado == null) {
+                // Modo destilado: informa preço/volume da garrafa, o sistema calcula o preço por ml
+                double precoCompraGarrafa = Double.parseDouble(campoPrecoCompra.getText().trim().replace(",", "."));
+                double precoVendaGarrafa = Double.parseDouble(campoPrecoVenda.getText().trim().replace(",", "."));
+                int volumeGarrafaMl = Integer.parseInt(campoQuantidade.getText().trim());
+
+                if (volumeGarrafaMl <= 0) {
+                    mostrarErro("O volume da garrafa precisa ser maior que zero.");
+                    return;
+                }
+
+                precoCompra = precoCompraGarrafa / volumeGarrafaMl;
+                precoVenda = precoVendaGarrafa / volumeGarrafaMl;
+                quantidade = volumeGarrafaMl;
+            } else {
+                quantidade = Integer.parseInt(campoQuantidade.getText().trim());
+                precoCompra = Double.parseDouble(campoPrecoCompra.getText().trim().replace(",", "."));
+                precoVenda = Double.parseDouble(campoPrecoVenda.getText().trim().replace(",", "."));
+            }
+
             if (itemSelecionado == null) {
                 ItemEstoque novo = new ItemEstoque(categoria, nome, quantidade, precoCompra, precoVenda, estoqueMinimo);
                 repository.salvar(novo);
-                mostrarSucesso("Item \"" + nome + "\" cadastrado com sucesso!");
+                String extra = checkDestilado.isSelected() ? String.format(" (R$ %.4f/ml)", precoVenda) : "";
+                mostrarSucesso("Item \"" + nome + "\" cadastrado com sucesso!" + extra);
                 limparCampos();
             } else {
                 itemSelecionado.setCategoria(categoria);
