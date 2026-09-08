@@ -46,8 +46,14 @@ public class EstoqueView {
     private final Button botaoCancelar = new Button("Cancelar edição");
 
     private ItemEstoque itemSelecionado;
+    private final boolean somenteLeitura;
 
     public EstoqueView() {
+        this(false);
+    }
+
+    public EstoqueView(boolean somenteLeitura) {
+        this.somenteLeitura = somenteLeitura;
         FormatadorCampo.aplicarFormatoInteiro(campoQuantidade);
         FormatadorCampo.aplicarFormatoInteiro(campoEstoqueMinimo);
         FormatadorCampo.aplicarFormatoPreco(campoPrecoCompra);
@@ -60,7 +66,13 @@ public class EstoqueView {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
         root.setCenter(tabela);
-        root.setBottom(criarFormulario());
+        if (!somenteLeitura) {
+            root.setBottom(criarFormulario());
+        } else {
+            Label labelAviso = new Label("Modo somente leitura — apenas o Patrão pode cadastrar, editar ou remover itens.");
+            labelAviso.setStyle("-fx-text-fill: #666; -fx-padding: 10 0 0 0;");
+            root.setBottom(labelAviso);
+        }
         return root;
     }
 
@@ -88,7 +100,7 @@ public class EstoqueView {
         tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
-            if (novo != null) {
+            if (novo != null && !somenteLeitura) {
                 entrarModoEdicao(novo);
             }
         });
@@ -199,6 +211,7 @@ public class EstoqueView {
             int estoqueMinimo = Integer.parseInt(campoEstoqueMinimo.getText().trim());
 
             if (checkDestilado.isSelected() && itemSelecionado == null) {
+                // Modo destilado: informa preço/volume da garrafa, o sistema calcula o preço por ml
                 double precoCompraGarrafa = Double.parseDouble(campoPrecoCompra.getText().trim().replace(",", "."));
                 double precoVendaGarrafa = Double.parseDouble(campoPrecoVenda.getText().trim().replace(",", "."));
                 int volumeGarrafaMl = Integer.parseInt(campoQuantidade.getText().trim());
