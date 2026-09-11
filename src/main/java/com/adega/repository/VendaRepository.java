@@ -12,7 +12,9 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class VendaRepository {
 
@@ -108,5 +110,41 @@ public class VendaRepository {
         }
 
         return 0;
+    }
+
+    public Map<String, Double> faturamentoPorDia() {
+        String sql = "SELECT substr(data_hora, 1, 10) AS dia, SUM(valor) AS total FROM vendas GROUP BY dia ORDER BY dia DESC";
+        Map<String, Double> resultado = new LinkedHashMap<>();
+
+        try (Connection conn = conectar();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                resultado.put(rs.getString("dia"), rs.getDouble("total"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao calcular faturamento por dia: " + e.getMessage(), e);
+        }
+
+        return resultado;
+    }
+
+    public Map<String, Integer> rankingBebidas() {
+        String sql = "SELECT descricao, COUNT(*) AS quantidade FROM vendas GROUP BY descricao ORDER BY quantidade DESC";
+        Map<String, Integer> resultado = new LinkedHashMap<>();
+
+        try (Connection conn = conectar();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                resultado.put(rs.getString("descricao"), rs.getInt("quantidade"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao calcular ranking de bebidas: " + e.getMessage(), e);
+        }
+
+        return resultado;
     }
 }
