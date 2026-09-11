@@ -135,4 +135,30 @@ public class EstoqueRepository {
 
         return itens;
     }
+
+    public List<ItemEstoque> listarComEstoqueBaixo() {
+        String sql = "SELECT * FROM estoque WHERE quantidade <= estoque_minimo ORDER BY categoria, nome";
+        List<ItemEstoque> itens = new ArrayList<>();
+
+        try (Connection conn = conectar();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                itens.add(new ItemEstoque(
+                        rs.getInt("id"),
+                        rs.getString("categoria"),
+                        rs.getString("nome"),
+                        rs.getInt("quantidade"),
+                        rs.getDouble("preco_compra"),
+                        rs.getDouble("preco_venda"),
+                        rs.getInt("estoque_minimo")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao listar estoque baixo: " + e.getMessage(), e);
+        }
+
+        return itens;
+    }
 }
