@@ -1,0 +1,17 @@
+[33mae2fe86[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Adicionei um botão único na classe RelatorioView - Atualizar tudo para  recarregar as 4 abas de uma vez.
+[33m9989215[m EstoqueRepository ganhou listarComEstoqueBaixo
+[33m91b3ad8[m Adicionei a funcionalidade faturamento por dia na classe VendaRepository (agrupa por dia usando a própria data/hora salva) e rankingBebidas() (conta quantas vezes cada descrição de venda apareceu, ordenado do mais vendido pro menos).
+[33m67fc1f8[m Alterção da classe VendaRegistro de dentro do pacote venda para fora do pacote
+[33m7c106ad[m Remoção da classe Copao dentro do pacote model, a classe se tornou obsoleta devido as ultimas alterações
+[33m18caf53[m Adicionei novas funcionalidades nas classes Adega e  de acordo com as novas classes implementadas nos commits anteriores
+[33mf951268[m Finalização e correção de erros nas classes LoginView e GerenciarUsuariosView
+[33m4e8e8cf[m FInalização das classes Usuario e UsuarioRepository
+[33m56f8706[m Criação da classe SenhaUtil e Papel para a administração de permissões dos funcionarios
+[33m13c0cae[m Correção de um erro de digitação
+[33m43d2913[m Mudanças nas classes EstoqueView e VendaCopao e nova classe FormatadorCampo para evitar erros na digitação dos preços
+[33m8c6ed8a[m EstoqueRepository ganhou a funcionalidade atualizar e remover agora esta conectado a tela no JavaFX
+[33mc7ccea7[m Mudança no pacote copao e item, generalizei para destilados para não ter a necessidade de criar uma classe para cada bebida que for usada no copão
+[33mfd63a8f[m Implementação das funcionalidades de design pattern decorator nas classes de montagem do copao e criação de novas classes para possibilitar o implante do mesmo
+[33mdc4559e[m Integração das funcionalidades entre Java e JavaFX nas classes PagamentoDialog,VendaGarrafaView, RelatorioView
+[33m5624497[m Polimento na UI e nova tabela no SQLite
+[33md07ff41[m Sistema Adega: CLI completo + inicio da interface JavaFX
