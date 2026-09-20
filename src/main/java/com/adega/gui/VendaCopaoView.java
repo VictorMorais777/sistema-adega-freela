@@ -1,6 +1,7 @@
 package com.adega.gui;
 
 import com.adega.model.ItemEstoque;
+import com.adega.model.ItemVendido;
 import com.adega.model.VendaRegistro;
 import com.adega.repository.EstoqueRepository;
 import com.adega.repository.VendaRepository;
@@ -214,14 +215,20 @@ public class VendaCopaoView {
         String descricao = nome + " (" + mlDestilado + "ml de " + destilado.getCategoria() + " " + destilado.getNome()
                 + ", " + energetico.getNome() + ", " + qtdGelo + "x " + gelo.getNome() + ")";
 
-        PagamentoDialog.abrir(descricao, precoVenda, (forma, valorPago, troco) -> {
+        PagamentoDialog.abrir(descricao, precoVenda, (forma, desconto, valorPago, troco) -> {
             estoqueRepository.atualizarQuantidade(destilado.getId(), destilado.getQuantidade() - mlDestilado);
             estoqueRepository.atualizarQuantidade(energetico.getId(), energetico.getQuantidade() - 1);
             estoqueRepository.atualizarQuantidade(gelo.getId(), gelo.getQuantidade() - qtdGelo);
 
-            vendaRepository.salvar(new VendaRegistro(descricao, precoVenda, forma, valorPago, troco));
+            VendaRegistro venda = new VendaRegistro(descricao, precoVenda, desconto, forma, valorPago, troco);
+            vendaRepository.salvar(venda, List.of(
+                    new ItemVendido(destilado.getId(), mlDestilado),
+                    new ItemVendido(energetico.getId(), 1),
+                    new ItemVendido(gelo.getId(), qtdGelo)
+            ));
 
-            mostrarSucesso("Copão \"" + nome + "\" vendido! Troco: R$ " + String.format("%.2f", troco));
+            mostrarSucesso("Copão \"" + nome + "\" vendido! Total: R$ " + String.format("%.2f", precoVenda - desconto)
+                    + (troco > 0 ? " | Troco: R$ " + String.format("%.2f", troco) : ""));
             limparCampos();
             carregarCombos();
         });
