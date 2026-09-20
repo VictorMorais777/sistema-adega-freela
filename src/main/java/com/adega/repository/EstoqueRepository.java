@@ -110,6 +110,34 @@ public class EstoqueRepository {
         }
     }
 
+    public ItemEstoque buscarPorId(int id) {
+        String sql = "SELECT * FROM estoque WHERE id = ?";
+
+        try (Connection conn = conectar();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new ItemEstoque(
+                            rs.getInt("id"),
+                            rs.getString("categoria"),
+                            rs.getString("nome"),
+                            rs.getInt("quantidade"),
+                            rs.getDouble("preco_compra"),
+                            rs.getDouble("preco_venda"),
+                            rs.getInt("estoque_minimo")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao buscar item por id: " + e.getMessage(), e);
+        }
+
+        return null;
+    }
+
     public List<ItemEstoque> listarTodos() {
         String sql = "SELECT * FROM estoque ORDER BY categoria, nome";
         List<ItemEstoque> itens = new ArrayList<>();
